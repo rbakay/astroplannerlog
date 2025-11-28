@@ -1,11 +1,12 @@
 
-const CACHE_NAME = "astroplannerlog-v2";
+const CACHE_NAME = "astroplannerlog-v3";
 const OFFLINE_URLS = [
   "./",
   "index.html",
   "app.css",
   "app.js",
   "manifest.webmanifest",
+  "astroplannerlog-180.png",
   "astroplannerlog-192.png",
   "astroplannerlog-512.png"
 ];
@@ -36,7 +37,6 @@ self.addEventListener("fetch", (event) => {
       return (
         response ||
         fetch(event.request).catch(() => {
-          // Fallback to index for navigation requests when offline
           if (event.request.mode === "navigate") {
             return caches.match("index.html");
           }

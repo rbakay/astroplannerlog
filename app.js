@@ -126,6 +126,15 @@ function parseAstroPlannerTSV(text) {
   return logs;
 }
 
+function parseDateTime(str) {
+  if (!str) return 0;
+  const [datePart, timePart = "00:00"] = str.split(" ");
+  const [d, m, y] = datePart.split(".").map((v) => parseInt(v, 10));
+  const [hh, mm] = timePart.split(":").map((v) => parseInt(v, 10));
+  if (!y || !m || !d) return 0;
+  return new Date(y, (m || 1) - 1, d, hh || 0, mm || 0).getTime();
+}
+
 function buildFilters(logs) {
   const types = new Set();
   const consts = new Set();
@@ -145,7 +154,11 @@ function buildFilters(logs) {
   fillSelect(typeFilter, ["__all__", ...Array.from(types).sort()], "All types");
   fillSelect(constFilter, ["__all__", ...Array.from(consts).sort()], "All constellations");
   fillSelect(scopeFilter, ["__all__", ...Array.from(scopes).sort()], "All telescopes");
-  fillSelect(dateFilter, ["__all__", ...Array.from(dates).sort()], "All dates");
+
+  const sortedDates = Array.from(dates).sort(
+    (a, b) => parseDateTime(b + " 00:00") - parseDateTime(a + " 00:00")
+  );
+  fillSelect(dateFilter, ["__all__", ...sortedDates], "All dates");
 }
 
 function fillSelect(select, values, allLabel) {
@@ -198,7 +211,8 @@ function applyFilters(logs) {
 }
 
 function render() {
-  const visible = applyFilters(allLogs);
+  const filtered = applyFilters(allLogs);
+  const visible = filtered.slice().sort((a, b) => parseDateTime(b.datetime) - parseDateTime(a.datetime));
 
   // stats
   statsLogs.textContent = `Logs: ${visible.length}`;
@@ -245,6 +259,9 @@ function render() {
       pills.appendChild(c);
     }
 
+    const summary = document.createElement("div");
+    summary.className = "log-summary-row";
+
     const dateEl = document.createElement("div");
     dateEl.className = "log-date";
     dateEl.textContent = log.datetime || "";
@@ -253,14 +270,16 @@ function render() {
     scopeEl.className = "log-scope";
     scopeEl.textContent = log.telescope || "";
 
+    summary.appendChild(dateEl);
+    summary.appendChild(scopeEl);
+
     const toggle = document.createElement("div");
     toggle.className = "log-toggle";
     toggle.textContent = "›";
 
     header.appendChild(main);
     header.appendChild(pills);
-    header.appendChild(dateEl);
-    header.appendChild(scopeEl);
+    header.appendChild(summary);
     header.appendChild(toggle);
 
     const details = document.createElement("div");
@@ -315,7 +334,6 @@ function render() {
     header.addEventListener("click", () => {
       const expanded = card.classList.toggle("expanded");
       if (expanded) {
-        // auto-expand height
         details.style.maxHeight = detailsInner.offsetHeight + 20 + "px";
       } else {
         details.style.maxHeight = "0";
@@ -327,7 +345,6 @@ function render() {
 
     logsList.appendChild(card);
 
-    // small tweak: expand first card by default
     if (index === 0 && log.notes) {
       setTimeout(() => {
         card.classList.add("expanded");
@@ -354,7 +371,6 @@ document.addEventListener("DOMContentLoaded", () => {
     handleNewData(lastText);
   }
 
-  // Register service worker
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker

@@ -151,19 +151,15 @@ body {
 }
 
 .log-header {
-  display: grid;
-  grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.3fr);
-  grid-template-rows: auto auto;
-  column-gap: 8px;
-  row-gap: 4px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 12px 14px 10px;
-  align-items: center;
   cursor: pointer;
 }
 
 .log-main {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
   min-width: 0;
 }
 
@@ -186,8 +182,6 @@ body {
   flex-wrap: wrap;
   gap: 6px;
   justify-content: flex-end;
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
 }
 
 .pill {
@@ -209,22 +203,18 @@ body {
   color: #f1deff;
 }
 
-.log-date,
-.log-scope {
+.log-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: #b0b6d6;
-  text-align: right;
 }
 
-.log-date {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-}
-
+.log-date,
 .log-scope {
-  grid-column: 2 / 3;
-  grid-row: 2 / 3;
-  margin-top: 14px;
+  white-space: nowrap;
 }
 
 .log-toggle {
@@ -233,14 +223,12 @@ body {
   top: 12px;
   font-size: 20px;
   color: #7f8bcb;
+  transform-origin: center;
+  transition: transform 0.2s ease;
 }
 
 .log-card.expanded .log-toggle {
   transform: rotate(90deg);
-}
-
-.log-card .log-header {
-  position: relative;
 }
 
 .log-details {
@@ -297,5 +285,25 @@ body {
 
   .app-title {
     font-size: 28px;
+  }
+
+  .log-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .log-main {
+    flex: 1 1 auto;
+  }
+
+  .pills-row {
+    justify-content: flex-end;
+  }
+
+  .log-summary-row {
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: flex-end;
   }
 }
