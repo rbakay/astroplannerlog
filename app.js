@@ -92,7 +92,6 @@ function parseAstroPlannerTSV(text) {
 
     const id = getCell(cells, "id");
     const name = getCell(cells, "name");
-    const object = name || id;
     const type = getCell(cells, "type");
     const constellation = getCell(cells, "const");
     const telescope = getCell(cells, "telescope");
@@ -104,12 +103,12 @@ function parseAstroPlannerTSV(text) {
     const opticalAid = getCell(cells, "optical aid");
     const plan = getCell(cells, "plan");
 
-    if (!object && !notes) continue;
+    if (!id && !name && !notes) continue;
 
     logs.push({
       id,
       name,
-      object: object || "Unknown object",
+      objectKey: id || name || "Unknown object",
       type,
       constellation,
       telescope,
@@ -194,7 +193,9 @@ function applyFilters(logs) {
 
     if (state.search) {
       const haystack =
-        (log.object || "") +
+        (log.id || "") +
+        " " +
+        (log.name || "") +
         " " +
         (log.notes || "") +
         " " +
@@ -212,11 +213,12 @@ function applyFilters(logs) {
 
 function render() {
   const filtered = applyFilters(allLogs);
-  const visible = filtered.slice().sort((a, b) => parseDateTime(b.datetime) - parseDateTime(a.datetime));
+  const visible = filtered
+    .slice()
+    .sort((a, b) => parseDateTime(b.datetime) - parseDateTime(a.datetime));
 
-  // stats
   statsLogs.textContent = `Logs: ${visible.length}`;
-  const uniqueObjects = new Set(visible.map((l) => l.object));
+  const uniqueObjects = new Set(visible.map((l) => l.objectKey));
   statsObjects.textContent = `Objects: ${uniqueObjects.size}`;
 
   logsList.innerHTML = "";
@@ -233,11 +235,20 @@ function render() {
 
     const objEl = document.createElement("div");
     objEl.className = "log-object";
-    objEl.textContent = log.object || "Unknown object";
+
+    if (log.id && log.name && log.name !== log.id) {
+      objEl.textContent = `${log.id} (${log.name})`;
+    } else if (log.id) {
+      objEl.textContent = log.id;
+    } else if (log.name) {
+      objEl.textContent = log.name;
+    } else {
+      objEl.textContent = "Unknown object";
+    }
 
     const subEl = document.createElement("div");
     subEl.className = "log-subtitle";
-    subEl.textContent = log.name && log.name !== log.object ? log.name : "";
+    subEl.textContent = "";
 
     main.appendChild(objEl);
     if (subEl.textContent) main.appendChild(subEl);
@@ -330,7 +341,6 @@ function render() {
 
     details.appendChild(detailsInner);
 
-    // expand/collapse
     header.addEventListener("click", () => {
       const expanded = card.classList.toggle("expanded");
       if (expanded) {
@@ -362,7 +372,6 @@ function render() {
   }
 }
 
-// Restore last file from localStorage (for offline reopen)
 document.addEventListener("DOMContentLoaded", () => {
   const lastText = localStorage.getItem("astroplannerlog:lastFileText");
   const lastName = localStorage.getItem("astroplannerlog:lastFileName");
@@ -375,6 +384,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("load", () => {
       navigator.serviceWorker
         .register("./service-worker.js")
+        .then((registration) => {
+          registration.update();
+        })
         .catch((err) => console.error("SW registration failed", err));
     });
   }

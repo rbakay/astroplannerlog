@@ -269,13 +269,9 @@ body {
   text-align: center;
 }
 
-.app-footer-link a {
-  color: #a8b6ff;
-  text-decoration: none;
-}
-
-.app-footer-link a:hover {
-  text-decoration: underline;
+.app-version {
+  margin-top: 4px;
+  opacity: 0.9;
 }
 
 @media (min-width: 768px) {
