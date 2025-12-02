@@ -9,6 +9,7 @@ const state = {
 };
 
 let allLogs = [];
+let visibleLimit = 20; // how many logs to show at once
 
 const fileInput = document.getElementById("fileInput");
 const fileLabel = document.getElementById("fileLabel");
@@ -38,31 +39,37 @@ fileInput.addEventListener("change", (e) => {
 
 searchInput.addEventListener("input", () => {
   state.search = searchInput.value.trim().toLowerCase();
+  visibleLimit = 20;
   render();
 });
 
 typeFilter.addEventListener("change", () => {
   state.type = typeFilter.value;
+  visibleLimit = 20;
   render();
 });
 
 constFilter.addEventListener("change", () => {
   state.const = constFilter.value;
+  visibleLimit = 20;
   render();
 });
 
 scopeFilter.addEventListener("change", () => {
   state.scope = scopeFilter.value;
+  visibleLimit = 20;
   render();
 });
 
 dateFilter.addEventListener("change", () => {
   state.date = dateFilter.value;
+  visibleLimit = 20;
   render();
 });
 
 function handleNewData(text) {
   allLogs = parseAstroPlannerTSV(text);
+  visibleLimit = 20;
   buildFilters(allLogs);
   render();
 }
@@ -213,15 +220,23 @@ function applyFilters(logs) {
 
 function render() {
   const filtered = applyFilters(allLogs);
-  const visible = filtered
+
+  // сортируем все подходящие логи по дате (новые сверху)
+  const sorted = filtered
     .slice()
     .sort((a, b) => parseDateTime(b.datetime) - parseDateTime(a.datetime));
 
-  statsLogs.textContent = `Logs: ${visible.length}`;
-  const uniqueObjects = new Set(visible.map((l) => l.objectKey));
+  const totalLogs = sorted.length;
+  const uniqueObjects = new Set(sorted.map((l) => l.objectKey));
+
+  // статистика – по всем отфильтрованным логам
+  statsLogs.textContent = `Logs: ${totalLogs}`;
   statsObjects.textContent = `Objects: ${uniqueObjects.size}`;
 
   logsList.innerHTML = "";
+
+  // ограничиваем видимые записи
+  const visible = sorted.slice(0, visibleLimit);
 
   visible.forEach((log, index) => {
     const card = document.createElement("article");
@@ -370,8 +385,35 @@ function render() {
       '<div class="log-header"><div class="log-main"><div class="log-object">No logs match your filters</div><div class="log-subtitle">Try changing filters or search text.</div></div></div>';
     logsList.appendChild(empty);
   }
+
+  // кнопка "Show more", если есть ещё логи
+  if (totalLogs > visible.length) {
+    const btnWrapper = document.createElement("div");
+    btnWrapper.style.display = "flex";
+    btnWrapper.style.justifyContent = "center";
+    btnWrapper.style.margin = "8px 0 0";
+
+    const btn = document.createElement("button");
+    btn.textContent = "Show more";
+    btn.style.borderRadius = "999px";
+    btn.style.border = "1px solid rgba(116,140,255,0.6)";
+    btn.style.background = "rgba(12,16,40,0.9)";
+    btn.style.color = "#f8f9ff";
+    btn.style.padding = "8px 18px";
+    btn.style.fontSize = "14px";
+    btn.style.cursor = "pointer";
+
+    btn.addEventListener("click", () => {
+      visibleLimit += 20;
+      render();
+    });
+
+    btnWrapper.appendChild(btn);
+    logsList.appendChild(btnWrapper);
+  }
 }
 
+// Restore last file from localStorage (for offline reopen)
 document.addEventListener("DOMContentLoaded", () => {
   const lastText = localStorage.getItem("astroplannerlog:lastFileText");
   const lastName = localStorage.getItem("astroplannerlog:lastFileName");
