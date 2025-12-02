@@ -1,5 +1,5 @@
 
-const CACHE_NAME = "astroplannerlog-v3";
+const CACHE_NAME = "astroplannerlog-v4";
 const OFFLINE_URLS = [
   "./",
   "index.html",
